@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { parseDateTimeLocal } from "../utils/dates.server";
-
+import "../styles/app-style.css";
 // export const loader = async ({ request }) => {
 //   await authenticate.admin(request);
 //   return null;
@@ -259,102 +259,153 @@ export default function CreateCampaignPage({ loaderData }) {
     });
 
   return (
-    <s-page heading="Create Campaign">
+  <s-page>
+
+    <div className="spm-dashboard">
+
+      <div className="spm-header">
+        <div>
+          <h1>Create Campaign</h1>
+
+          <p>
+            Schedule product discounts and automate price updates.
+          </p>
+        </div>
+      </div>
+
       <Form method="post">
+
         <input
           type="hidden"
           name="timezoneOffset"
           value={timezoneOffset}
         />
 
-        <div className="campaign-card">
+        {selectedProducts.map((product) => (
+          <input
+            key={product.id}
+            type="hidden"
+            name="products"
+            value={getProductFormValue(product)}
+          />
+        ))}
 
-          <h3>Campaign Information</h3>
+        <div className="create-campaign-layout">
 
-          <div className="form-group">
-            <label>Campaign Name</label>
+          {/* Campaign Information */}
 
-            <input
-              type="text"
-              name="name"
-              required
-              className="form-control"
-            />
+          <div className="campaign-card">
+
+            <div className="card-header">
+              <h2>Campaign Information</h2>
+            </div>
+
+            <div className="form-group">
+              <label>Campaign Name</label>
+
+              <input
+                type="text"
+                name="name"
+                required
+                className="form-control"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Start Date</label>
+
+              <input
+                type="datetime-local"
+                name="startDate"
+                required
+                className="form-control"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>End Date</label>
+
+              <input
+                type="datetime-local"
+                name="endDate"
+                required
+                className="form-control"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Discount Type</label>
+
+              <select
+                name="discountType"
+                className="form-control"
+              >
+                <option value="fixed_price">
+                  Fixed Price
+                </option>
+
+                <option value="percentage_discount">
+                  Percentage Discount
+                </option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Sale Value</label>
+
+              <input
+                type="number"
+                step="0.01"
+                name="saleValue"
+                required
+                className="form-control"
+              />
+            </div>
+
+            <div className="summary-box">
+
+              <h3>Summary</h3>
+
+              <div className="summary-grid">
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Selected Products
+                  </div>
+
+                  <div className="summary-value">
+                    {selectedProductIds.length}
+                  </div>
+                </div>
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Total Products
+                  </div>
+
+                  <div className="summary-value">
+                    {products.length}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
 
-          <div className="form-group">
-            <label>Start Date</label>
+          {/* Product Selection */}
 
-            <input
-              type="datetime-local"
-              name="startDate"
-              required
-              className="form-control"
-            />
-          </div>
+          <div className="campaign-card">
 
-          <div className="form-group">
-            <label>End Date</label>
+            <div className="card-header">
+              <h2>Select Products</h2>
 
-            <input
-              type="datetime-local"
-              name="endDate"
-              required
-              className="form-control"
-            />
-          </div>
+              <span>
+                {selectedProductIds.length} Selected
+              </span>
+            </div>
 
-          <div className="form-group">
-            <label>Discount Type</label>
-
-            <select
-              name="discountType"
-              className="form-control"
-            >
-              <option value="fixed_price">
-                Fixed Price
-              </option>
-
-              <option value="percentage_discount">
-                Percentage Discount
-              </option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Sale Value</label>
-
-            <input
-              type="number"
-              step="0.01"
-              name="saleValue"
-              required
-              className="form-control"
-            />
-          </div>
-
-        </div>
-
-        <div className="campaign-card">
-
-          <h3>Select Products</h3>
-
-          {selectedProducts.map((product) => (
-            <input
-              key={product.id}
-              type="hidden"
-              name="products"
-              value={getProductFormValue(product)}
-            />
-          ))}
-
-          <div
-            style={{
-              display: "grid",
-              gap: "12px",
-              marginBottom: "16px",
-            }}
-          >
             <input
               type="text"
               placeholder="Search products..."
@@ -365,14 +416,8 @@ export default function CreateCampaignPage({ loaderData }) {
               }
             />
 
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
+            <div className="selection-toolbar">
+
               <select
                 className="form-control"
                 value={selectedCollection}
@@ -386,7 +431,7 @@ export default function CreateCampaignPage({ loaderData }) {
                 }}
               >
                 <option value="">
-                  All collections
+                  All Collections
                 </option>
 
                 {collections.map((collection) => (
@@ -418,7 +463,7 @@ export default function CreateCampaignPage({ loaderData }) {
               >
                 {allVisibleSelected
                   ? "Clear Visible"
-                  : "Select All Visible"}
+                  : "Select Visible"}
               </button>
 
               <button
@@ -430,65 +475,79 @@ export default function CreateCampaignPage({ loaderData }) {
               >
                 Clear All
               </button>
+
             </div>
 
-            <div>
+            <div className="selection-count">
               Selected {selectedProductIds.length} of{" "}
               {products.length} products
             </div>
-          </div>
 
-          <div className="product-list">
+            <div className="product-list">
 
-            {filteredProducts.map((product) => (
-              <label
-                key={product.id}
-                className="product-item"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedProductIds.includes(
-                    product.id
-                  )}
-                  onChange={() =>
-                    toggleProduct(product.id)
-                  }
-                />
+              {filteredProducts.map((product) => (
 
-                <div className="product-info">
+                <label
+                  key={product.id}
+                  className="product-item"
+                >
 
-                  <div className="product-title">
-                    {product.title}
+                  <input
+                    type="checkbox"
+                    checked={selectedProductIds.includes(
+                      product.id
+                    )}
+                    onChange={() =>
+                      toggleProduct(product.id)
+                    }
+                  />
+
+                  <div className="product-info">
+
+                    <div className="product-title">
+                      {product.title}
+                    </div>
+
+                    <div className="product-price">
+                      Price: $
+                      {product.variants.nodes[0]
+                        ?.price || "0"}
+                    </div>
+
                   </div>
 
-                  <div className="product-price">
-                    Price: $
-                    {product.variants.nodes[0]
-                      ?.price || "0"}
-                  </div>
+                </label>
 
+              ))}
+
+              {filteredProducts.length === 0 && (
+                <div className="product-item">
+                  No products found
                 </div>
-              </label>
-            ))}
+              )}
 
-            {filteredProducts.length === 0 && (
-              <div className="product-item">
-                No products found.
-              </div>
-            )}
+            </div>
 
           </div>
 
         </div>
 
-        <button
-          type="submit"
-          className="save-button"
-        >
-          Save Campaign
-        </button>
+        <div className="page-actions">
+
+          <button
+            type="submit"
+            className="save-button"
+          >
+            Create Campaign
+          </button>
+
+        </div>
 
       </Form>
-    </s-page>
-  );
+
+    </div>
+
+  </s-page>
+);
+
 }
