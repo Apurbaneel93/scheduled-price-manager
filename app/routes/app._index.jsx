@@ -1,5 +1,6 @@
 import "../styles/app-style.css";
 import { authenticate } from "../shopify.server";
+import logo from "../../assets/images/scheduled-price-manager-icon.png";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -17,7 +18,7 @@ export default function Index() {
           <div className="spm-brand">
 
             <img
-              src="/scheduled-price-manager-icon.png"
+              src={logo}
               alt="Scheduled Price Manager"
               className="spm-logo"
             />
