@@ -1,3 +1,4 @@
+import "../styles/campaign.css";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { Form } from "react-router";
@@ -37,203 +38,237 @@ export default function CampaignsPage({ loaderData }) {
   const { campaigns, stats } = loaderData;
 
   return (
-    <s-page heading="Campaigns">
+    <s-page>
+      <div className="spm-dashboard">
 
-      <s-section heading="Campaign Dashboard">
+        <div className="spm-header">
+          <div>
+            <h1>Campaigns</h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            marginBottom: "20px",
-            flexWrap: "wrap",
-          }}
-        >
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-          >
-            <strong>Total Campaigns</strong>
-            <div>{stats.total}</div>
-          </s-box>
+            <p>
+              Manage and monitor all scheduled pricing campaigns.
+            </p>
+          </div>
 
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-          >
-            <strong>Scheduled</strong>
-            <div>{stats.scheduled}</div>
-          </s-box>
-
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-          >
-            <strong>Active</strong>
-            <div>{stats.active}</div>
-          </s-box>
-
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-          >
-            <strong>Completed</strong>
-            <div>{stats.completed}</div>
-          </s-box>
+          <s-link href="/app/create-campaign">
+            <s-button variant="primary">
+              Create Campaign
+            </s-button>
+          </s-link>
         </div>
 
-      </s-section>
+        <div className="stats-grid">
 
-      <s-section heading="Scheduled Price Campaigns">
+          <div className="stat-card">
+            <h3>Total Campaigns</h3>
+            <div className="stat-value">
+              {stats.total}
+            </div>
+          </div>
 
-        <s-paragraph>
-          Total Campaigns: {campaigns.length}
-        </s-paragraph>
+          <div className="stat-card">
+            <h3>Scheduled</h3>
+            <div className="stat-value">
+              {stats.scheduled}
+            </div>
+          </div>
 
-        {campaigns.length === 0 ? (
-          <s-paragraph>
-            No campaigns found.
-          </s-paragraph>
-        ) : (
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-          >
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th align="left">Campaign</th>
-                  <th align="left">Type</th>
-                  <th align="left">Status</th>
-                  <th align="left">Start</th>
-                  <th align="left">End</th>
-                  <th align="left">Actions</th>
-                </tr>
-              </thead>
+          <div className="stat-card">
+            <h3>Active</h3>
+            <div className="stat-value">
+              {stats.active}
+            </div>
+          </div>
 
-              <tbody>
-                {campaigns.map((campaign) => (
-                  <tr key={campaign.id}>
-                    <td>
-                      {campaign.name}
-                    </td>
+          <div className="stat-card">
+            <h3>Completed</h3>
+            <div className="stat-value">
+              {stats.completed}
+            </div>
+          </div>
 
-                    <td>
-                      {campaign.discountType ===
-                      "fixed_price"
-                        ? "Fixed Price"
-                        : "Percentage"}
-                    </td>
+        </div>
 
-                    <td>
-                      {campaign.status ===
-                        "scheduled" &&
-                        "🟡 Scheduled"}
+        <div className="spm-card">
 
-                      {campaign.status ===
-                        "active" &&
-                        "🟢 Active"}
+          <div className="card-header">
+            <h2>Scheduled Price Campaigns</h2>
 
-                      {campaign.status ===
-                        "completed" &&
-                        "⚫ Completed"}
-                    </td>
+            <span>
+              Total: {campaigns.length}
+            </span>
+          </div>
 
-                    <td>
-                      {new Date(
-                        campaign.startDate
-                      ).toLocaleDateString()}
-                    </td>
+          {campaigns.length === 0 ? (
+            <div className="empty-state">
+              <h3>No Campaigns Found</h3>
 
-                    <td>
-                      {new Date(
-                        campaign.endDate
-                      ).toLocaleDateString()}
-                    </td>
+              <p>
+                Create your first scheduled pricing campaign.
+              </p>
 
-                    <td>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <Form
-                          method="get"
-                          action={`/app/campaign-details/${campaign.id}`}
-                        >
-                          <button type="submit">
-                            View
-                          </button>
-                        </Form>
+              <s-link href="/app/create-campaign">
+                <s-button variant="primary">
+                  Create Campaign
+                </s-button>
+              </s-link>
+            </div>
+          ) : (
+            <div className="campaign-table-wrapper">
 
-                        {campaign.status ===
-                          "scheduled" && (
-                          <>
-                            <Form
-                              method="get"
-                              action={`/app/edit-campaign/${campaign.id}`}
+              <table className="campaign-table">
+
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  {campaigns.map((campaign) => (
+
+                    <tr key={campaign.id}>
+
+                      <td>
+                        <strong>
+                          {campaign.name}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {campaign.discountType === "fixed_price"
+                          ? "Fixed Price"
+                          : "Percentage"}
+                      </td>
+
+                      <td>
+                        {campaign.status === "scheduled" && (
+                          <span className="badge scheduled">
+                            Scheduled
+                          </span>
+                        )}
+
+                        {campaign.status === "active" && (
+                          <span className="badge active">
+                            Active
+                          </span>
+                        )}
+
+                        {campaign.status === "completed" && (
+                          <span className="badge completed">
+                            Completed
+                          </span>
+                        )}
+                      </td>
+
+                      <td>
+                        {new Date(
+                          campaign.startDate
+                        ).toLocaleDateString()}
+                      </td>
+
+                      <td>
+                        {new Date(
+                          campaign.endDate
+                        ).toLocaleDateString()}
+                      </td>
+
+                      <td>
+
+                        <div className="action-buttons">
+
+                          <Form
+                            method="get"
+                            action={`/app/campaign-details/${campaign.id}`}
+                          >
+                            <button
+                              type="submit"
+                              className="btn btn-view"
                             >
-                              <button type="submit">
-                                Edit
-                              </button>
-                            </Form>
+                              View
+                            </button>
+                          </Form>
 
+                          {campaign.status === "scheduled" && (
+                            <>
+                              <Form
+                                method="get"
+                                action={`/app/edit-campaign/${campaign.id}`}
+                              >
+                                <button
+                                  type="submit"
+                                  className="btn btn-edit"
+                                >
+                                  Edit
+                                </button>
+                              </Form>
+
+                              <Form
+                                method="post"
+                                action={`/app/run-campaign/${campaign.id}`}
+                              >
+                                <button
+                                  type="submit"
+                                  className="btn btn-run"
+                                >
+                                  Run Now
+                                </button>
+                              </Form>
+                            </>
+                          )}
+
+                          {campaign.status === "active" && (
                             <Form
                               method="post"
-                              action={`/app/run-campaign/${campaign.id}`}
+                              action={`/app/stop-campaign/${campaign.id}`}
                             >
-                              <button type="submit">
-                                Run Now
+                              <button
+                                type="submit"
+                                className="btn btn-stop"
+                              >
+                                Stop
                               </button>
                             </Form>
-                          </>
-                        )}
+                          )}
 
-                        {campaign.status ===
-                          "active" && (
-                          <Form
-                            method="post"
-                            action={`/app/stop-campaign/${campaign.id}`}
-                          >
-                            <button type="submit">
-                              Stop Campaign
-                            </button>
-                          </Form>
-                        )}
+                          {campaign.status === "completed" && (
+                            <Form
+                              method="post"
+                              action={`/app/delete-campaign/${campaign.id}`}
+                            >
+                              <button
+                                type="submit"
+                                className="btn btn-delete"
+                              >
+                                Delete
+                              </button>
+                            </Form>
+                          )}
 
-                        {campaign.status ===
-                          "completed" && (
-                          <Form
-                            method="post"
-                            action={`/app/delete-campaign/${campaign.id}`}
-                          >
-                            <button type="submit">
-                              Delete
-                            </button>
-                          </Form>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </s-box>
-        )}
-      </s-section>
+                        </div>
 
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          )}
+
+        </div>
+
+      </div>
     </s-page>
   );
 }
