@@ -1,7 +1,8 @@
 import { Form, redirect } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
+import { parseDateTimeLocal } from "../utils/dates.server";
 
 // export const loader = async ({ request }) => {
 //   await authenticate.admin(request);
@@ -48,6 +49,7 @@ export const action = async ({ request }) => {
   const name = formData.get("name");
   const startDate = formData.get("startDate");
   const endDate = formData.get("endDate");
+  const timezoneOffset = formData.get("timezoneOffset");
   const discountType = formData.get("discountType");
   const saleValue = formData.get("saleValue");
 
@@ -62,8 +64,14 @@ export const action = async ({ request }) => {
   const campaign = await prisma.campaign.create({
     data: {
       name,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parseDateTimeLocal(
+        startDate,
+        timezoneOffset
+      ),
+      endDate: parseDateTimeLocal(
+        endDate,
+        timezoneOffset
+      ),
       discountType,
       saleValue: Number(saleValue),
       status: "scheduled",
@@ -104,6 +112,16 @@ export default function CreateCampaignPage({ loaderData }) {
   const { products } = loaderData;
 
   const [search, setSearch] = useState("");
+  const [
+    timezoneOffset,
+    setTimezoneOffset,
+  ] = useState("0");
+
+  useEffect(() => {
+    setTimezoneOffset(
+      String(new Date().getTimezoneOffset())
+    );
+  }, []);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -115,6 +133,11 @@ export default function CreateCampaignPage({ loaderData }) {
   return (
     <s-page heading="Create Campaign">
       <Form method="post">
+        <input
+          type="hidden"
+          name="timezoneOffset"
+          value={timezoneOffset}
+        />
 
         <div className="campaign-card">
 

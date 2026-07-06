@@ -1,6 +1,8 @@
 import { Form, redirect } from "react-router";
+import { useEffect, useState } from "react";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
+import { parseDateTimeLocal } from "../utils/dates.server";
 
 export const loader = async ({ request, params }) => {
   await authenticate.admin(request);
@@ -33,6 +35,7 @@ export const action = async ({ request, params }) => {
   const name = formData.get("name");
   const startDate = formData.get("startDate");
   const endDate = formData.get("endDate");
+  const timezoneOffset = formData.get("timezoneOffset");
   const discountType = formData.get("discountType");
   const saleValue = parseFloat(formData.get("saleValue"));
 
@@ -48,8 +51,14 @@ export const action = async ({ request, params }) => {
     },
     data: {
       name,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parseDateTimeLocal(
+        startDate,
+        timezoneOffset
+      ),
+      endDate: parseDateTimeLocal(
+        endDate,
+        timezoneOffset
+      ),
       discountType,
       saleValue,
     },
@@ -80,11 +89,46 @@ export const action = async ({ request, params }) => {
 
 export default function EditCampaignPage({ loaderData }) {
   const { campaign } = loaderData;
+  const [
+    timezoneOffset,
+    setTimezoneOffset,
+  ] = useState("0");
+  const [startDate, setStartDate] = useState(
+    ""
+  );
+  const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    const formatDateTimeLocal = (value) => {
+      const date = new Date(value);
+      const localDate = new Date(
+        date.getTime() -
+          date.getTimezoneOffset() * 60 * 1000
+      );
+
+      return localDate
+        .toISOString()
+        .slice(0, 16);
+    };
+
+    setTimezoneOffset(
+      String(new Date().getTimezoneOffset())
+    );
+    setStartDate(
+      formatDateTimeLocal(campaign.startDate)
+    );
+    setEndDate(formatDateTimeLocal(campaign.endDate));
+  }, [campaign.endDate, campaign.startDate]);
 
   return (
     <s-page heading="Edit Campaign">
       <s-section heading="Campaign Information">
         <Form method="post">
+          <input
+            type="hidden"
+            name="timezoneOffset"
+            value={timezoneOffset}
+          />
 
           <div style={{ marginBottom: "16px" }}>
             <label>Campaign Name</label>
@@ -104,10 +148,9 @@ export default function EditCampaignPage({ loaderData }) {
             <input
               type="datetime-local"
               name="startDate"
-              defaultValue={
-                new Date(campaign.startDate)
-                  .toISOString()
-                  .slice(0, 16)
+              value={startDate}
+              onChange={(event) =>
+                setStartDate(event.target.value)
               }
               required
             />
@@ -119,10 +162,9 @@ export default function EditCampaignPage({ loaderData }) {
             <input
               type="datetime-local"
               name="endDate"
-              defaultValue={
-                new Date(campaign.endDate)
-                  .toISOString()
-                  .slice(0, 16)
+              value={endDate}
+              onChange={(event) =>
+                setEndDate(event.target.value)
               }
               required
             />

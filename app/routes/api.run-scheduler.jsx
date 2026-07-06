@@ -33,9 +33,6 @@ async function getAdminClient() {
 export const loader = async () => {
   const now = new Date();
 
-  const admin =
-    await getAdminClient();
-
   const campaignsToStart =
     await prisma.campaign.findMany({
       where: {
@@ -61,6 +58,12 @@ export const loader = async () => {
         products: true,
       },
     });
+
+  const admin =
+    campaignsToStart.length ||
+    campaignsToStop.length
+      ? await getAdminClient()
+      : null;
 
   let started = 0;
   let stopped = 0;
@@ -129,6 +132,8 @@ export const loader = async () => {
     success: true,
     started,
     stopped,
+    dueToStart: campaignsToStart.length,
+    dueToStop: campaignsToStop.length,
     checkedAt: now,
   });
 };
