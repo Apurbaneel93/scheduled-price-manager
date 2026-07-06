@@ -26,153 +26,208 @@ export default function CampaignDetailsPage({ loaderData }) {
   const { campaign } = loaderData;
 
   return (
-    <s-page heading="Campaign Details">
+    <s-page>
 
-      <s-section heading="Campaign Information">
+      <div className="spm-dashboard">
 
-        <s-box
-          padding="base"
-          borderWidth="base"
-          borderRadius="base"
-        >
+        <div className="spm-header">
 
-          <p>
-            <strong>Name:</strong>{" "}
-            {campaign.name}
-          </p>
+          <div>
+            <h1>{campaign.name}</h1>
 
-          <p>
-            <strong>Status:</strong>{" "}
-            {campaign.status}
-          </p>
+            <p>
+              Campaign details and product pricing information.
+            </p>
+          </div>
 
-          <p>
-            <strong>Discount Type:</strong>{" "}
-            {campaign.discountType ===
-            "fixed_price"
-              ? "Fixed Price"
-              : "Percentage Discount"}
-          </p>
+          <s-link href="/app/campaigns">
+            <s-button>
+              Back to Campaigns
+            </s-button>
+          </s-link>
 
-          <p>
-            <strong>Sale Value:</strong>{" "}
-            {campaign.saleValue}
-          </p>
+        </div>
 
-          <p>
-            <strong>Products:</strong>{" "}
-            {campaign.products.length}
-          </p>
+        <div className="stats-grid">
 
-          <p>
-            <strong>Start Date:</strong>{" "}
-            {new Date(
-              campaign.startDate
-            ).toLocaleString()}
-          </p>
+          <div className="stat-card">
+            <h3>Status</h3>
 
-          <p>
-            <strong>End Date:</strong>{" "}
-            {new Date(
-              campaign.endDate
-            ).toLocaleString()}
-          </p>
+            <div
+              className={`badge ${campaign.status}`}
+            >
+              {campaign.status}
+            </div>
+          </div>
 
-        </s-box>
+          <div className="stat-card">
+            <h3>Products</h3>
 
-      </s-section>
+            <div className="stat-value">
+              {campaign.products.length}
+            </div>
+          </div>
 
-      <s-section heading="Campaign Products">
+          <div className="stat-card">
+            <h3>Discount Value</h3>
 
-        {campaign.products.length === 0 ? (
-          <p>No products found.</p>
-        ) : (
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-            }}
-          >
-            <thead>
-              <tr>
-                <th align="left">
-                  Product
-                </th>
+            <div className="stat-value">
+              {campaign.saleValue}
+            </div>
+          </div>
 
-                <th align="left">
-                  Original Price
-                </th>
+          <div className="stat-card">
+            <h3>Type</h3>
 
-                <th align="left">
-                  Sale Price
-                </th>
+            <div className="summary-value">
+              {campaign.discountType === "fixed_price"
+                ? "Fixed Price"
+                : "Percentage"}
+            </div>
+          </div>
 
-                <th align="left">
-                  Compare Price
-                </th>
+        </div>
 
-                <th align="left">
-                  Variant
-                </th>
-              </tr>
-            </thead>
+        <div className="spm-card">
 
-            <tbody>
-              {campaign.products.map(
-                (product) => (
-                  <tr key={product.id}>
-                    <td>
-                      {product.productTitle}
-                    </td>
+          <div className="card-header">
+            <h2>Campaign Information</h2>
+          </div>
 
-                    <td>
-                      {product.originalPrice
-                        ? Number(
-                            product.originalPrice
-                          ).toFixed(2)
-                        : "-"}
-                    </td>
+          <div className="details-grid">
 
-                    <td>
-                      {product.salePrice
-                        ? Number(
-                            product.salePrice
-                          ).toFixed(2)
-                        : "-"}
-                    </td>
+            <div className="detail-item">
+              <span className="detail-label">
+                Campaign Name
+              </span>
 
-                    <td>
-                      {product.originalComparePrice
-                        ? Number(
-                            product.originalComparePrice
-                          ).toFixed(2)
-                        : "-"}
-                    </td>
+              <span className="detail-value">
+                {campaign.name}
+              </span>
+            </div>
 
-                    <td>
-                      {product.variantId
-                        ? product.variantId.slice(
-                            -12
-                          )
-                        : "-"}
-                    </td>
+            <div className="detail-item">
+              <span className="detail-label">
+                Start Date
+              </span>
+
+              <span className="detail-value">
+                {new Date(
+                  campaign.startDate
+                ).toLocaleString()}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">
+                End Date
+              </span>
+
+              <span className="detail-value">
+                {new Date(
+                  campaign.endDate
+                ).toLocaleString()}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">
+                Discount Type
+              </span>
+
+              <span className="detail-value">
+                {campaign.discountType === "fixed_price"
+                  ? "Fixed Price"
+                  : "Percentage Discount"}
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="spm-card">
+
+          <div className="card-header">
+            <h2>Campaign Products</h2>
+
+            <span>
+              {campaign.products.length} Products
+            </span>
+          </div>
+
+          {campaign.products.length === 0 ? (
+            <div className="empty-state">
+              No products found.
+            </div>
+          ) : (
+            <div className="campaign-table-wrapper">
+
+              <table className="campaign-table">
+
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Original Price</th>
+                    <th>Sale Price</th>
+                    <th>Compare Price</th>
+                    <th>Variant</th>
                   </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        )}
+                </thead>
 
-      </s-section>
+                <tbody>
 
-      <div
-        style={{
-          marginTop: "20px",
-        }}
-      >
-        <a href="/app/campaigns">
-          ← Back to Campaigns
-        </a>
+                  {campaign.products.map(
+                    (product) => (
+                      <tr key={product.id}>
+
+                        <td>
+                          {product.productTitle}
+                        </td>
+
+                        <td>
+                          {product.originalPrice
+                            ? Number(
+                                product.originalPrice
+                              ).toFixed(2)
+                            : "-"}
+                        </td>
+
+                        <td>
+                          {product.salePrice
+                            ? Number(
+                                product.salePrice
+                              ).toFixed(2)
+                            : "-"}
+                        </td>
+
+                        <td>
+                          {product.originalComparePrice
+                            ? Number(
+                                product.originalComparePrice
+                              ).toFixed(2)
+                            : "-"}
+                        </td>
+
+                        <td>
+                          {product.variantId
+                            ? product.variantId.slice(-12)
+                            : "-"}
+                        </td>
+
+                      </tr>
+                    )
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          )}
+
+        </div>
+
       </div>
 
     </s-page>
