@@ -53,10 +53,18 @@ export const loader = async ({ request }) => {
 
       const result = await response.json();
 
+      console.log("================================");
+      console.log("PRODUCT:", product.productTitle);
+      console.log("PRODUCT ID:", product.productId);
+      console.log("VARIANT ID:", product.variantId);
+      console.log("SALE PRICE:", product.salePrice);
       console.log(
-        `Updated ${product.productTitle}`,
-        JSON.stringify(result)
+        JSON.stringify(result, null, 2)
       );
+      console.log("================================");
+
+
+
     }
 
     await prisma.campaign.update({
