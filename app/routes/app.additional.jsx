@@ -1,4 +1,4 @@
-import "./additional.css";
+import "app/styles/app-style.css";
 
 export default function AdditionalPage() {
   return (
