@@ -1,3 +1,5 @@
+/* global process */
+
 import prisma from "../db.server";
 import { unauthenticated } from "../shopify.server";
 

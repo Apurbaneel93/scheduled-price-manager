@@ -19,10 +19,7 @@ export const loader = async ({ request }) => {
     ).length,
 
     active: campaigns.filter(
-      (campaign) =>
-        campaign.status === "active" ||
-        campaign.status === "starting" ||
-        campaign.status === "stopping"
+      (campaign) => campaign.status === "active"
     ).length,
 
     completed: campaigns.filter(
@@ -148,24 +145,8 @@ export default function CampaignsPage({ loaderData }) {
                         "🟢 Active"}
 
                       {campaign.status ===
-                        "starting" &&
-                        "🔵 Starting"}
-
-                      {campaign.status ===
-                        "stopping" &&
-                        "🔵 Stopping"}
-
-                      {campaign.status ===
                         "completed" &&
                         "⚫ Completed"}
-
-                      {campaign.status ===
-                        "start_failed" &&
-                        "🔴 Start Failed"}
-
-                      {campaign.status ===
-                        "stop_failed" &&
-                        "🔴 Stop Failed"}
                     </td>
 
                     <td>
@@ -220,10 +201,8 @@ export default function CampaignsPage({ loaderData }) {
                           </>
                         )}
 
-                        {(campaign.status ===
-                          "active" ||
-                          campaign.status ===
-                            "start_failed") && (
+                        {campaign.status ===
+                          "active" && (
                           <Form
                             method="post"
                             action={`/app/stop-campaign/${campaign.id}`}

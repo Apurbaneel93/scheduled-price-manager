@@ -10,7 +10,6 @@ export const loader = async ({ request, params }) => {
     },
     include: {
       products: true,
-      priceJobs: true,
     },
   });
 
@@ -25,15 +24,6 @@ export const loader = async ({ request, params }) => {
 
 export default function CampaignDetailsPage({ loaderData }) {
   const { campaign } = loaderData;
-
-  const jobStats = campaign.priceJobs.reduce(
-    (stats, job) => ({
-      ...stats,
-      [job.status]:
-        (stats[job.status] || 0) + 1,
-    }),
-    {}
-  );
 
   return (
     <s-page heading="Campaign Details">
@@ -72,15 +62,6 @@ export default function CampaignDetailsPage({ loaderData }) {
           <p>
             <strong>Products:</strong>{" "}
             {campaign.products.length}
-          </p>
-
-          <p>
-            <strong>Price Jobs:</strong>{" "}
-            {campaign.priceJobs.length} total,{" "}
-            {jobStats.pending || 0} pending,{" "}
-            {jobStats.processing || 0} processing,{" "}
-            {jobStats.completed || 0} completed,{" "}
-            {jobStats.failed || 0} failed
           </p>
 
           <p>

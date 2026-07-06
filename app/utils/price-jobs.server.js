@@ -7,7 +7,6 @@ import {
 
 const DEFAULT_BATCH_SIZE = 40;
 const MAX_ATTEMPTS = 3;
-const LOCK_TIMEOUT_MINUTES = 10;
 
 function getBatchSize(value) {
   const batchSize = Number(value);
@@ -107,25 +106,6 @@ export async function processPriceJobs(
   batchSizeValue
 ) {
   const batchSize = getBatchSize(batchSizeValue);
-  const staleLockDate = new Date(
-    Date.now() - LOCK_TIMEOUT_MINUTES * 60 * 1000
-  );
-
-  await prisma.campaignPriceJob.updateMany({
-    where: {
-      status: "processing",
-      lockedAt: {
-        lt: staleLockDate,
-      },
-      attempts: {
-        lt: MAX_ATTEMPTS,
-      },
-    },
-    data: {
-      status: "pending",
-      error: "Processing timed out; retrying.",
-    },
-  });
 
   const jobs = await prisma.campaignPriceJob.findMany({
     where: {
