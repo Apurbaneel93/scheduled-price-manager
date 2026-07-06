@@ -16,14 +16,9 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
-        {/* <s-link href="/app">Home</s-link>
-        <s-link href="/app/additional">Additional page</s-link> */}
-        <s-app-nav>
-          {/* <s-link href="/app">Dashboard</s-link> */}
-          <s-link href="/app/campaigns">Campaigns</s-link>
-          <s-link href="/app/create-campaign">Create Campaign</s-link>
-          {/* <s-link href="/app/products">Products</s-link> */}
-        </s-app-nav>
+        <s-link href="/app">Dashboard</s-link>
+        <s-link href="/app/campaigns">Campaigns</s-link>
+        <s-link href="/app/create-campaign">Create Campaign</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
