@@ -2,7 +2,7 @@ function formatMoney(value) {
   return String(Number(value).toFixed(2));
 }
 
-function getDiscountedPrice(campaign, product) {
+export function getDiscountedPrice(campaign, product) {
   const saleValue =
     campaign.saleValue ?? product.salePrice;
 
@@ -23,7 +23,87 @@ function getDiscountedPrice(campaign, product) {
   return saleValue;
 }
 
-function assertShopifyMutationSucceeded(
+export function getStartPriceUpdate(
+  campaign,
+  product
+) {
+  if (
+    !product.productId ||
+    !product.variantId
+  ) {
+    throw new Error(
+      `Missing Shopify product or variant ID for ${product.productTitle}`
+    );
+  }
+
+  if (product.originalPrice === null) {
+    throw new Error(
+      `Missing original price for ${product.productTitle}`
+    );
+  }
+
+  const newPrice = getDiscountedPrice(
+    campaign,
+    product
+  );
+
+  if (
+    !Number.isFinite(newPrice) ||
+    newPrice < 0
+  ) {
+    throw new Error(
+      `Invalid sale price for ${product.productTitle}`
+    );
+  }
+
+  const price = formatMoney(newPrice);
+  const compareAtPrice =
+    Number(product.originalPrice) > Number(newPrice)
+      ? formatMoney(product.originalPrice)
+      : product.originalComparePrice !== null &&
+          Number(product.originalComparePrice) >
+            Number(newPrice)
+        ? formatMoney(product.originalComparePrice)
+        : null;
+
+  return {
+    productId: product.productId,
+    productTitle: product.productTitle,
+    variantId: product.variantId,
+    price,
+    compareAtPrice,
+  };
+}
+
+export function getStopPriceUpdate(product) {
+  if (
+    !product.productId ||
+    !product.variantId
+  ) {
+    throw new Error(
+      `Missing Shopify product or variant ID for ${product.productTitle}`
+    );
+  }
+
+  if (product.originalPrice === null) {
+    throw new Error(
+      `Missing original price for ${product.productTitle}`
+    );
+  }
+
+  return {
+    productId: product.productId,
+    productTitle: product.productTitle,
+    variantId: product.variantId,
+    price: formatMoney(product.originalPrice),
+    compareAtPrice:
+      product.originalComparePrice !== null
+        ? formatMoney(product.originalComparePrice)
+        : null,
+  };
+}
+
+export function assertShopifyMutationSucceeded(
   result,
   action,
   product
@@ -56,77 +136,38 @@ function assertShopifyMutationSucceeded(
   }
 }
 
-export async function runCampaign(
+export async function updateVariantPrice(
   admin,
-  campaign
+  update,
+  action
 ) {
-  for (const product of campaign.products) {
-    if (
-      !product.productId ||
-      !product.variantId
-    ) {
-      throw new Error(
-        `Missing Shopify product or variant ID for ${product.productTitle}`
-      );
-    }
+  console.log(
+    `${action}:`,
+    update.productTitle
+  );
 
-    if (product.originalPrice === null) {
-      throw new Error(
-        `Missing original price for ${product.productTitle}`
-      );
-    }
+  console.log(
+    "PRODUCT ID:",
+    update.productId
+  );
 
-    const newPrice = getDiscountedPrice(
-      campaign,
-      product
-    );
+  console.log(
+    "VARIANT ID:",
+    update.variantId
+  );
 
-    if (
-      !Number.isFinite(newPrice) ||
-      newPrice < 0
-    ) {
-      throw new Error(
-        `Invalid sale price for ${product.productTitle}`
-      );
-    }
+  console.log(
+    "PRICE:",
+    update.price
+  );
 
-    const price = formatMoney(newPrice);
-    const compareAtPrice =
-      Number(product.originalPrice) > Number(newPrice)
-        ? formatMoney(product.originalPrice)
-        : product.originalComparePrice !== null &&
-            Number(product.originalComparePrice) >
-              Number(newPrice)
-          ? formatMoney(product.originalComparePrice)
-          : null;
+  console.log(
+    "COMPARE AT PRICE:",
+    update.compareAtPrice
+  );
 
-    console.log(
-      "RUNNING:",
-      product.productTitle
-    );
-
-    console.log(
-      "PRODUCT ID:",
-      product.productId
-    );
-
-    console.log(
-      "VARIANT ID:",
-      product.variantId
-    );
-
-    console.log(
-      "NEW PRICE:",
-      price
-    );
-
-    console.log(
-      "COMPARE AT PRICE:",
-      compareAtPrice
-    );
-
-    const response = await admin.graphql(
-      `
+  const response = await admin.graphql(
+    `
       mutation productVariantsBulkUpdate(
         $productId: ID!,
         $variants: [ProductVariantsBulkInput!]!
@@ -142,42 +183,59 @@ export async function runCampaign(
         }
       }
       `,
-      {
-        variables: {
-          productId: product.productId,
+    {
+      variables: {
+        productId: update.productId,
 
-          variants: [
-            {
-              id: product.variantId,
+        variants: [
+          {
+            id: update.variantId,
 
-              price,
+            price: update.price,
 
-              compareAtPrice,
-            },
-          ],
-        },
-      }
-    );
+            compareAtPrice: update.compareAtPrice,
+          },
+        ],
+      },
+    }
+  );
 
-    const result =
-      await response.json();
+  const result =
+    await response.json();
 
-    console.log(
-      "RUN RESULT"
-    );
+  console.log(`${action} RESULT`);
 
-    console.log(
-      JSON.stringify(
-        result,
-        null,
-        2
-      )
-    );
-
-    assertShopifyMutationSucceeded(
+  console.log(
+    JSON.stringify(
       result,
-      "RUN",
+      null,
+      2
+    )
+  );
+
+  assertShopifyMutationSucceeded(
+    result,
+    action,
+    update
+  );
+
+  return result;
+}
+
+export async function runCampaign(
+  admin,
+  campaign
+) {
+  for (const product of campaign.products) {
+    const update = getStartPriceUpdate(
+      campaign,
       product
+    );
+
+    await updateVariantPrice(
+      admin,
+      update,
+      "RUN"
     );
   }
 
@@ -189,97 +247,12 @@ export async function stopCampaign(
   campaign
 ) {
   for (const product of campaign.products) {
-    if (
-      !product.productId ||
-      !product.variantId
-    ) {
-      throw new Error(
-        `Missing Shopify product or variant ID for ${product.productTitle}`
-      );
-    }
+    const update = getStopPriceUpdate(product);
 
-    if (product.originalPrice === null) {
-      throw new Error(
-        `Missing original price for ${product.productTitle}`
-      );
-    }
-
-    console.log(
-      "RESTORING:",
-      product.productTitle
-    );
-
-    console.log(
-      "PRODUCT ID:",
-      product.productId
-    );
-
-    console.log(
-      "VARIANT ID:",
-      product.variantId
-    );
-
-    const response = await admin.graphql(
-      `
-      mutation productVariantsBulkUpdate(
-        $productId: ID!,
-        $variants: [ProductVariantsBulkInput!]!
-      ) {
-        productVariantsBulkUpdate(
-          productId: $productId,
-          variants: $variants
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-      `,
-      {
-        variables: {
-          productId: product.productId,
-
-          variants: [
-            {
-              id: product.variantId,
-
-              price: formatMoney(
-                product.originalPrice
-              ),
-
-              compareAtPrice:
-                product.originalComparePrice !==
-                null
-                  ? formatMoney(
-                      product.originalComparePrice
-                    )
-                  : null,
-            },
-          ],
-        },
-      }
-    );
-
-    const result =
-      await response.json();
-
-    console.log(
-      "STOP RESULT"
-    );
-
-    console.log(
-      JSON.stringify(
-        result,
-        null,
-        2
-      )
-    );
-
-    assertShopifyMutationSucceeded(
-      result,
-      "STOP",
-      product
+    await updateVariantPrice(
+      admin,
+      update,
+      "STOP"
     );
   }
 

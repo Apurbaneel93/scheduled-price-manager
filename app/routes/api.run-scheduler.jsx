@@ -1,55 +1,12 @@
-/* global process */
-
 import prisma from "../db.server";
-import { unauthenticated } from "../shopify.server";
 import {
-  runCampaign,
-  stopCampaign,
-} from "../utils/campaign.server";
-
-async function getAdminClient() {
-  const session = await prisma.session.findFirst({
-    where: {
-      id: {
-        startsWith: "offline_",
-      },
-    },
-    orderBy: {
-      expires: "desc",
-    },
-  });
-
-  if (!session?.shop) {
-    throw new Response("Offline Shopify session not found", {
-      status: 500,
-    });
-  }
-
-  const { admin } = await unauthenticated.admin(
-    session.shop
-  );
-
-  return admin;
-}
-
-function authorizeCronRequest(request) {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return;
-  }
-
-  const url = new URL(request.url);
-  const providedSecret =
-    request.headers.get("x-cron-secret") ||
-    url.searchParams.get("secret");
-
-  if (providedSecret !== cronSecret) {
-    throw new Response("Unauthorized", {
-      status: 401,
-    });
-  }
-}
+  authorizeCronRequest,
+  getOfflineAdminClient,
+} from "../utils/shopify-admin.server";
+import {
+  enqueueCampaignPriceJobs,
+  processPriceJobs,
+} from "../utils/price-jobs.server";
 
 export const loader = async ({ request }) => {
   authorizeCronRequest(request);
@@ -82,14 +39,9 @@ export const loader = async ({ request }) => {
       },
     });
 
-  const admin =
-    campaignsToStart.length ||
-    campaignsToStop.length
-      ? await getAdminClient()
-      : null;
-
   let started = 0;
   let stopped = 0;
+  let jobsQueued = 0;
 
   for (const campaign of campaignsToStart) {
     try {
@@ -98,9 +50,9 @@ export const loader = async ({ request }) => {
         campaign.name
       );
 
-      await runCampaign(
-        admin,
-        campaign
+      jobsQueued += await enqueueCampaignPriceJobs(
+        campaign,
+        "start"
       );
 
       await prisma.campaign.update({
@@ -108,7 +60,7 @@ export const loader = async ({ request }) => {
           id: campaign.id,
         },
         data: {
-          status: "active",
+          status: "starting",
         },
       });
 
@@ -128,9 +80,9 @@ export const loader = async ({ request }) => {
         campaign.name
       );
 
-      await stopCampaign(
-        admin,
-        campaign
+      jobsQueued += await enqueueCampaignPriceJobs(
+        campaign,
+        "stop"
       );
 
       await prisma.campaign.update({
@@ -138,7 +90,7 @@ export const loader = async ({ request }) => {
           id: campaign.id,
         },
         data: {
-          status: "completed",
+          status: "stopping",
         },
       });
 
@@ -151,10 +103,45 @@ export const loader = async ({ request }) => {
     }
   }
 
+  const pendingJobs =
+    await prisma.campaignPriceJob.count({
+      where: {
+        status: {
+          in: ["pending", "processing"],
+        },
+      },
+    });
+
+  const admin =
+    jobsQueued > 0 || pendingJobs > 0
+      ? await getOfflineAdminClient()
+      : null;
+
+  const jobResult = admin
+    ? await processPriceJobs(
+        admin,
+        new URL(request.url).searchParams.get(
+          "batchSize"
+        )
+      )
+    : {
+        picked: 0,
+        completed: 0,
+        failed: 0,
+        remaining: pendingJobs,
+        batchSize: 0,
+      };
+
   return Response.json({
     success: true,
     started,
     stopped,
+    jobsQueued,
+    jobsProcessed: jobResult.picked,
+    jobsCompleted: jobResult.completed,
+    jobsFailed: jobResult.failed,
+    jobsRemaining: jobResult.remaining,
+    batchSize: jobResult.batchSize,
     dueToStart: campaignsToStart.length,
     dueToStop: campaignsToStop.length,
     checkedAt: now,

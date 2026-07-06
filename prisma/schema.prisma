@@ -58,6 +58,7 @@ model Campaign {
   updatedAt     DateTime @updatedAt
 
   products      CampaignProduct[]
+  priceJobs     CampaignPriceJob[]
 }
 
 model CampaignProduct {
@@ -78,6 +79,40 @@ model CampaignProduct {
   comparePrice           Float?
 
   createdAt              DateTime @default(now())
+
+  priceJobs              CampaignPriceJob[]
+}
+
+model CampaignPriceJob {
+  id                 String   @id @default(cuid())
+
+  campaignId         String
+  campaign           Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  campaignProductId  String
+  campaignProduct    CampaignProduct @relation(fields: [campaignProductId], references: [id], onDelete: Cascade)
+
+  action             String
+  status             String   @default("pending")
+
+  productId          String
+  productTitle       String
+  variantId          String
+
+  price              String
+  compareAtPrice     String?
+
+  attempts           Int      @default(0)
+  error              String?
+  lockedAt           DateTime?
+  completedAt        DateTime?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([campaignProductId, action])
+  @@index([status, action, createdAt])
+  @@index([campaignId, action, status])
 }
 
 model AppSetting {

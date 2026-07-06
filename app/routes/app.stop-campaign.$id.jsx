@@ -1,7 +1,10 @@
 import { redirect } from "react-router";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
-import { stopCampaign } from "../utils/campaign.server";
+import {
+  enqueueCampaignPriceJobs,
+  processPriceJobs,
+} from "../utils/price-jobs.server";
 
 export const action = async ({ request, params }) => {
   const { admin } = await authenticate.admin(request);
@@ -21,20 +24,28 @@ export const action = async ({ request, params }) => {
     });
   }
 
-  if (campaign.status === "completed") {
+  if (
+    campaign.status === "completed" ||
+    campaign.status === "stopping"
+  ) {
     return redirect("/app/campaigns");
   }
 
-  await stopCampaign(admin, campaign);
+  await enqueueCampaignPriceJobs(
+    campaign,
+    "stop"
+  );
 
   await prisma.campaign.update({
     where: {
       id: campaign.id,
     },
     data: {
-      status: "completed",
+      status: "stopping",
     },
   });
+
+  await processPriceJobs(admin);
 
   return redirect("/app/campaigns");
 };
