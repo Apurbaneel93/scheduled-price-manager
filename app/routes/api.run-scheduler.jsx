@@ -1,3 +1,5 @@
+/* global process */
+
 import prisma from "../db.server";
 import { unauthenticated } from "../shopify.server";
 import {
@@ -30,7 +32,28 @@ async function getAdminClient() {
   return admin;
 }
 
-export const loader = async () => {
+function authorizeCronRequest(request) {
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    return;
+  }
+
+  const url = new URL(request.url);
+  const providedSecret =
+    request.headers.get("x-cron-secret") ||
+    url.searchParams.get("secret");
+
+  if (providedSecret !== cronSecret) {
+    throw new Response("Unauthorized", {
+      status: 401,
+    });
+  }
+}
+
+export const loader = async ({ request }) => {
+  authorizeCronRequest(request);
+
   const now = new Date();
 
   const campaignsToStart =

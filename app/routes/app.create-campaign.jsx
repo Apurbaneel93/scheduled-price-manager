@@ -16,10 +16,17 @@ export const loader = async ({ request }) => {
   const response = await admin.graphql(`
     #graphql
     query {
-      products(first: 50) {
+      products(first: 250) {
         nodes {
           id
           title
+
+          collections(first: 20) {
+            nodes {
+              id
+              title
+            }
+          }
 
           variants(first: 1) {
             nodes {
@@ -113,6 +120,14 @@ export default function CreateCampaignPage({ loaderData }) {
 
   const [search, setSearch] = useState("");
   const [
+    selectedCollection,
+    setSelectedCollection,
+  ] = useState("");
+  const [
+    selectedProductIds,
+    setSelectedProductIds,
+  ] = useState([]);
+  const [
     timezoneOffset,
     setTimezoneOffset,
   ] = useState("0");
@@ -123,12 +138,125 @@ export default function CreateCampaignPage({ loaderData }) {
     );
   }, []);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.title
-        .toLowerCase()
-        .includes(search.toLowerCase())
+  const collections = Array.from(
+    new Map(
+      products
+        .flatMap(
+          (product) =>
+            product.collections?.nodes || []
+        )
+        .map((collection) => [
+          collection.id,
+          collection,
+        ])
+    ).values()
+  ).sort((first, second) =>
+    first.title.localeCompare(second.title)
   );
+
+  const filteredProducts = products.filter(
+    (product) => {
+      const matchesSearch = product.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesCollection =
+        !selectedCollection ||
+        product.collections?.nodes?.some(
+          (collection) =>
+            collection.id === selectedCollection
+        );
+
+      return matchesSearch && matchesCollection;
+    }
+  );
+
+  const selectedProducts = products.filter(
+    (product) =>
+      selectedProductIds.includes(product.id)
+  );
+
+  const filteredProductIds = filteredProducts.map(
+    (product) => product.id
+  );
+
+  const allVisibleSelected =
+    filteredProductIds.length > 0 &&
+    filteredProductIds.every((productId) =>
+      selectedProductIds.includes(productId)
+    );
+
+  const toggleProduct = (productId) => {
+    setSelectedProductIds((currentIds) =>
+      currentIds.includes(productId)
+        ? currentIds.filter((id) => id !== productId)
+        : [...currentIds, productId]
+    );
+  };
+
+  const selectVisibleProducts = () => {
+    setSelectedProductIds((currentIds) =>
+      Array.from(
+        new Set([
+          ...currentIds,
+          ...filteredProductIds,
+        ])
+      )
+    );
+  };
+
+  const clearVisibleProducts = () => {
+    setSelectedProductIds((currentIds) =>
+      currentIds.filter(
+        (productId) =>
+          !filteredProductIds.includes(productId)
+      )
+    );
+  };
+
+  const selectCollectionProducts = () => {
+    if (!selectedCollection) {
+      return;
+    }
+
+    const collectionProductIds = products
+      .filter((product) =>
+        product.collections?.nodes?.some(
+          (collection) =>
+            collection.id === selectedCollection
+        )
+      )
+      .map((product) => product.id);
+
+    setSelectedProductIds((currentIds) =>
+      Array.from(
+        new Set([
+          ...currentIds,
+          ...collectionProductIds,
+        ])
+      )
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedProductIds([]);
+  };
+
+  const getProductFormValue = (product) =>
+    JSON.stringify({
+      id: product.id,
+      title: product.title,
+
+      variantId:
+        product.variants.nodes[0]?.id,
+
+      originalPrice:
+        product.variants.nodes[0]?.price,
+
+      originalComparePrice:
+        product.variants.nodes[0]
+          ?.compareAtPrice,
+    });
 
   return (
     <s-page heading="Create Campaign">
@@ -211,15 +339,104 @@ export default function CreateCampaignPage({ loaderData }) {
 
           <h3>Select Products</h3>
 
-          <input
-            type="text"
-            placeholder="🔍 Search products..."
-            className="product-search"
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-          />
+          {selectedProducts.map((product) => (
+            <input
+              key={product.id}
+              type="hidden"
+              name="products"
+              value={getProductFormValue(product)}
+            />
+          ))}
+
+          <div
+            style={{
+              display: "grid",
+              gap: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="product-search"
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+            />
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              <select
+                className="form-control"
+                value={selectedCollection}
+                onChange={(event) =>
+                  setSelectedCollection(
+                    event.target.value
+                  )
+                }
+                style={{
+                  maxWidth: "280px",
+                }}
+              >
+                <option value="">
+                  All collections
+                </option>
+
+                {collections.map((collection) => (
+                  <option
+                    key={collection.id}
+                    value={collection.id}
+                  >
+                    {collection.title}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={selectCollectionProducts}
+                disabled={!selectedCollection}
+              >
+                Select Collection
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  allVisibleSelected
+                    ? clearVisibleProducts
+                    : selectVisibleProducts
+                }
+                disabled={filteredProducts.length === 0}
+              >
+                {allVisibleSelected
+                  ? "Clear Visible"
+                  : "Select All Visible"}
+              </button>
+
+              <button
+                type="button"
+                onClick={clearSelection}
+                disabled={
+                  selectedProductIds.length === 0
+                }
+              >
+                Clear All
+              </button>
+            </div>
+
+            <div>
+              Selected {selectedProductIds.length} of{" "}
+              {products.length} products
+            </div>
+          </div>
 
           <div className="product-list">
 
@@ -230,21 +447,12 @@ export default function CreateCampaignPage({ loaderData }) {
               >
                 <input
                   type="checkbox"
-                  name="products"
-                  value={JSON.stringify({
-                    id: product.id,
-                    title: product.title,
-
-                    variantId:
-                      product.variants.nodes[0]?.id,
-
-                    originalPrice:
-                      product.variants.nodes[0]?.price,
-
-                    originalComparePrice:
-                      product.variants.nodes[0]
-                        ?.compareAtPrice,
-                  })}
+                  checked={selectedProductIds.includes(
+                    product.id
+                  )}
+                  onChange={() =>
+                    toggleProduct(product.id)
+                  }
                 />
 
                 <div className="product-info">
@@ -262,6 +470,12 @@ export default function CreateCampaignPage({ loaderData }) {
                 </div>
               </label>
             ))}
+
+            {filteredProducts.length === 0 && (
+              <div className="product-item">
+                No products found.
+              </div>
+            )}
 
           </div>
 
