@@ -1,4 +1,4 @@
-import "../styles/campaign.css";
+import "../styles/app-style.css";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { Form } from "react-router";
