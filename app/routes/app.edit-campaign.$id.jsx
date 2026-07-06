@@ -121,102 +121,201 @@ export default function EditCampaignPage({ loaderData }) {
   }, [campaign.endDate, campaign.startDate]);
 
   return (
-    <s-page heading="Edit Campaign">
-      <s-section heading="Campaign Information">
+    <s-page>
+
+      <div className="spm-dashboard">
+
+        <div className="spm-header">
+
+          <div>
+            <h1>Edit Campaign</h1>
+
+            <p>
+              Update campaign schedule and pricing configuration.
+            </p>
+          </div>
+
+        </div>
+
         <Form method="post">
+
           <input
             type="hidden"
             name="timezoneOffset"
             value={timezoneOffset}
           />
 
-          <div style={{ marginBottom: "16px" }}>
-            <label>Campaign Name</label>
-            <br />
-            <input
-              type="text"
-              name="name"
-              defaultValue={campaign.name}
-              required
-              style={{ width: "100%" }}
-            />
-          </div>
+          <div className="create-campaign-layout">
 
-          <div style={{ marginBottom: "16px" }}>
-            <label>Start Date</label>
-            <br />
-            <input
-              type="datetime-local"
-              name="startDate"
-              value={startDate}
-              onChange={(event) =>
-                setStartDate(event.target.value)
-              }
-              required
-            />
-          </div>
+            <div className="campaign-card">
 
-          <div style={{ marginBottom: "16px" }}>
-            <label>End Date</label>
-            <br />
-            <input
-              type="datetime-local"
-              name="endDate"
-              value={endDate}
-              onChange={(event) =>
-                setEndDate(event.target.value)
-              }
-              required
-            />
-          </div>
+              <div className="card-header">
+                <h2>Campaign Information</h2>
+              </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label>Discount Type</label>
-            <br />
-            <select
-              name="discountType"
-              defaultValue={campaign.discountType}
-            >
-              <option value="fixed_price">
-                Fixed Price
-              </option>
+              <div className="form-group">
+                <label>Campaign Name</label>
 
-              <option value="percentage_discount">
-                Percentage Discount
-              </option>
-            </select>
-          </div>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={campaign.name}
+                  required
+                  className="form-control"
+                />
+              </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label>Sale Value</label>
-            <br />
-            <input
-              type="number"
-              step="0.01"
-              name="saleValue"
-              defaultValue={campaign.saleValue}
-              required
-            />
+              <div className="form-group">
+                <label>Start Date</label>
+
+                <input
+                  type="datetime-local"
+                  name="startDate"
+                  value={startDate}
+                  onChange={(event) =>
+                    setStartDate(event.target.value)
+                  }
+                  required
+                  className="form-control"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>End Date</label>
+
+                <input
+                  type="datetime-local"
+                  name="endDate"
+                  value={endDate}
+                  onChange={(event) =>
+                    setEndDate(event.target.value)
+                  }
+                  required
+                  className="form-control"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Discount Type</label>
+
+                <select
+                  name="discountType"
+                  defaultValue={campaign.discountType}
+                  className="form-control"
+                >
+                  <option value="fixed_price">
+                    Fixed Price
+                  </option>
+
+                  <option value="percentage_discount">
+                    Percentage Discount
+                  </option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Sale Value</label>
+
+                <input
+                  type="number"
+                  step="0.01"
+                  name="saleValue"
+                  defaultValue={campaign.saleValue}
+                  required
+                  className="form-control"
+                />
+              </div>
+
+            </div>
+
+            <div className="campaign-card">
+
+              <div className="card-header">
+                <h2>Campaign Summary</h2>
+              </div>
+
+              <div className="summary-grid">
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Status
+                  </div>
+
+                  <div className="summary-value">
+                    {campaign.status}
+                  </div>
+                </div>
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Discount Type
+                  </div>
+
+                  <div className="summary-value">
+                    {campaign.discountType === "fixed_price"
+                      ? "Fixed Price"
+                      : "Percentage"}
+                  </div>
+                </div>
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Current Value
+                  </div>
+
+                  <div className="summary-value">
+                    {campaign.saleValue}
+                  </div>
+                </div>
+
+                <div className="summary-item">
+                  <div className="summary-label">
+                    Campaign ID
+                  </div>
+
+                  <div className="summary-value">
+                    {campaign.id.slice(0, 8)}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
 
           <div
             style={{
               display: "flex",
-              gap: "10px",
-              marginTop: "20px",
+              justifyContent: "space-between",
+              marginTop: "24px",
+              gap: "12px",
             }}
           >
-            <button type="submit">
+
+            <s-link href="/app/campaigns">
+              <s-button>
+                Cancel
+              </s-button>
+            </s-link>
+
+            <button
+              type="submit"
+              className="save-button"
+              style={{
+                width: "auto",
+                minWidth: "220px",
+              }}
+            >
               Update Campaign
             </button>
 
-            <a href="/app/campaigns">
-              Cancel
-            </a>
           </div>
 
         </Form>
-      </s-section>
+
+      </div>
+
     </s-page>
   );
 }
