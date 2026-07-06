@@ -1,24 +1,104 @@
+function formatMoney(value) {
+  return String(Number(value).toFixed(2));
+}
+
+function getDiscountedPrice(campaign, product) {
+  const saleValue =
+    campaign.saleValue ?? product.salePrice;
+
+  if (
+    campaign.discountType ===
+    "percentage_discount"
+  ) {
+    return (
+      product.originalPrice -
+      (
+        product.originalPrice *
+        saleValue
+      ) /
+        100
+    );
+  }
+
+  return saleValue;
+}
+
+function assertShopifyMutationSucceeded(
+  result,
+  action,
+  product
+) {
+  const errors = result.errors || [];
+  const userErrors =
+    result.data?.productVariantsBulkUpdate
+      ?.userErrors || [];
+
+  if (errors.length || userErrors.length) {
+    console.error(
+      `${action} FAILED:`,
+      product.productTitle
+    );
+
+    console.error(
+      JSON.stringify(
+        {
+          errors,
+          userErrors,
+        },
+        null,
+        2
+      )
+    );
+
+    throw new Error(
+      `${action} failed for ${product.productTitle}`
+    );
+  }
+}
+
 export async function runCampaign(
   admin,
   campaign
 ) {
   for (const product of campaign.products) {
-    if (!product.variantId) continue;
+    if (
+      !product.productId ||
+      !product.variantId
+    ) {
+      throw new Error(
+        `Missing Shopify product or variant ID for ${product.productTitle}`
+      );
+    }
 
-    let newPrice = product.salePrice;
+    if (product.originalPrice === null) {
+      throw new Error(
+        `Missing original price for ${product.productTitle}`
+      );
+    }
+
+    const newPrice = getDiscountedPrice(
+      campaign,
+      product
+    );
 
     if (
-      campaign.discountType ===
-      "percentage_discount"
+      !Number.isFinite(newPrice) ||
+      newPrice < 0
     ) {
-      newPrice =
-        product.originalPrice -
-        (
-          product.originalPrice *
-          product.salePrice
-        ) /
-          100;
+      throw new Error(
+        `Invalid sale price for ${product.productTitle}`
+      );
     }
+
+    const price = formatMoney(newPrice);
+    const compareAtPrice =
+      Number(product.originalPrice) > Number(newPrice)
+        ? formatMoney(product.originalPrice)
+        : product.originalComparePrice !== null &&
+            Number(product.originalComparePrice) >
+              Number(newPrice)
+          ? formatMoney(product.originalComparePrice)
+          : null;
 
     console.log(
       "RUNNING:",
@@ -26,8 +106,23 @@ export async function runCampaign(
     );
 
     console.log(
+      "PRODUCT ID:",
+      product.productId
+    );
+
+    console.log(
+      "VARIANT ID:",
+      product.variantId
+    );
+
+    console.log(
       "NEW PRICE:",
-      newPrice
+      price
+    );
+
+    console.log(
+      "COMPARE AT PRICE:",
+      compareAtPrice
     );
 
     const response = await admin.graphql(
@@ -55,9 +150,9 @@ export async function runCampaign(
             {
               id: product.variantId,
 
-              price: String(
-                Number(newPrice).toFixed(2)
-              ),
+              price,
+
+              compareAtPrice,
             },
           ],
         },
@@ -78,6 +173,12 @@ export async function runCampaign(
         2
       )
     );
+
+    assertShopifyMutationSucceeded(
+      result,
+      "RUN",
+      product
+    );
   }
 
   return true;
@@ -88,11 +189,34 @@ export async function stopCampaign(
   campaign
 ) {
   for (const product of campaign.products) {
-    if (!product.variantId) continue;
+    if (
+      !product.productId ||
+      !product.variantId
+    ) {
+      throw new Error(
+        `Missing Shopify product or variant ID for ${product.productTitle}`
+      );
+    }
+
+    if (product.originalPrice === null) {
+      throw new Error(
+        `Missing original price for ${product.productTitle}`
+      );
+    }
 
     console.log(
       "RESTORING:",
       product.productTitle
+    );
+
+    console.log(
+      "PRODUCT ID:",
+      product.productId
+    );
+
+    console.log(
+      "VARIANT ID:",
+      product.variantId
     );
 
     const response = await admin.graphql(
@@ -120,14 +244,14 @@ export async function stopCampaign(
             {
               id: product.variantId,
 
-              price: String(
+              price: formatMoney(
                 product.originalPrice
               ),
 
               compareAtPrice:
                 product.originalComparePrice !==
                 null
-                  ? String(
+                  ? formatMoney(
                       product.originalComparePrice
                     )
                   : null,
@@ -150,6 +274,12 @@ export async function stopCampaign(
         null,
         2
       )
+    );
+
+    assertShopifyMutationSucceeded(
+      result,
+      "STOP",
+      product
     );
   }
 
