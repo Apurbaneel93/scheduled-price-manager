@@ -27,10 +27,6 @@ export default function App() {
           className={styles.logo}
         />
 
-        <span className={styles.badge}>
-          🚀 Shopify Price Automation
-        </span>
-
         <h1 className={styles.heading}>
           Scheduled Price Manager
         </h1>

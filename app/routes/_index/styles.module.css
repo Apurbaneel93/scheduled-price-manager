@@ -23,6 +23,15 @@
   transform: translateX(-50%);
 }
 
+.logo {
+  width: 140px;
+  height: 140px;
+  border-radius: 30px;
+  display: block;
+  margin: 0 auto 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
 .hero {
   text-align: center;
   max-width: 900px;
