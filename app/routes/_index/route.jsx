@@ -1,7 +1,7 @@
 import { redirect, Form, useLoaderData } from "react-router";
 import { login } from "../../shopify.server";
 import styles from "./styles.module.css";
-import logo from "../../assets/images/scheduled-price-manager-icon.png";
+import logo from "../../../assets/images/scheduled-price-manager-icon.png";
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
