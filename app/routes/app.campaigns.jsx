@@ -231,7 +231,7 @@ export default function CampaignsPage({ loaderData }) {
                             </Form>
                           )}
 
-                          {campaign.status === "completed" && (
+                          {/* {campaign.status === "completed" && ( */}
                             <Form
                               method="post"
                               action={`/app/delete-campaign/${campaign.id}`}
@@ -252,7 +252,7 @@ export default function CampaignsPage({ loaderData }) {
                                 Delete
                               </button>
                             </Form>
-                          )}
+                          {/* )} */}
 
                         </div>
 
