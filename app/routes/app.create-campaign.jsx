@@ -4,6 +4,7 @@ import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { parseDateTimeLocal } from "../utils/dates.server";
 import "../styles/app-style.css";
+import ProductSelector from "../components/ProductSelector.jsx";
 // export const loader = async ({ request }) => {
 //   await authenticate.admin(request);
 //   return null;
