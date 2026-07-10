@@ -183,31 +183,25 @@ export default function CampaignsPage({ loaderData }) {
 
                         <div className="action-buttons">
 
-                          <Form
-                            method="get"
-                            action={`/app/campaign-details/${campaign.id}`}
-                          >
+                          <s-link href={`/app/campaign-details/${campaign.id}`}>
                             <button
-                              type="submit"
+                              type="button"
                               className="btn btn-view"
                             >
                               View
                             </button>
-                          </Form>
+                          </s-link>
 
                           {campaign.status === "scheduled" && (
                             <>
-                              <Form
-                                method="get"
-                                action={`/app/edit-campaign/${campaign.id}`}
-                              >
+                              <s-link href={`/app/edit-campaign/${campaign.id}`}>
                                 <button
-                                  type="submit"
+                                  type="button"
                                   className="btn btn-edit"
                                 >
                                   Edit
                                 </button>
-                              </Form>
+                              </s-link>
 
                               <Form
                                 method="post"
@@ -241,6 +235,15 @@ export default function CampaignsPage({ loaderData }) {
                             <Form
                               method="post"
                               action={`/app/delete-campaign/${campaign.id}`}
+                              onSubmit={(e) => {
+                                if (
+                                  !window.confirm(
+                                    "Delete this campaign permanently?"
+                                  )
+                                ) {
+                                  e.preventDefault();
+                                }
+                              }}
                             >
                               <button
                                 type="submit"
