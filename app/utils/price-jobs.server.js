@@ -5,8 +5,8 @@ import {
   updateVariantPrice,
 } from "./campaign.server";
 
-const DEFAULT_BATCH_SIZE = 40;
-const MAX_ATTEMPTS = 3;
+const DEFAULT_BATCH_SIZE = 500
+const MAX_ATTEMPTS = 10;
 
 function getBatchSize(value) {
   const batchSize = Number(value);
@@ -125,11 +125,10 @@ export async function processPriceJobs(
   let completed = 0;
   let failed = 0;
 
-  for (const job of jobs) {
+  await Promise.all(
+  jobs.map(async (job) => {
     await prisma.campaignPriceJob.update({
-      where: {
-        id: job.id,
-      },
+      where: { id: job.id },
       data: {
         status: "processing",
         lockedAt: new Date(),
@@ -154,9 +153,7 @@ export async function processPriceJobs(
       );
 
       await prisma.campaignPriceJob.update({
-        where: {
-          id: job.id,
-        },
+        where: { id: job.id },
         data: {
           status: "completed",
           completedAt: new Date(),
@@ -167,17 +164,12 @@ export async function processPriceJobs(
       completed++;
     } catch (error) {
       const nextAttempts = job.attempts + 1;
-      const isFinalFailure =
-        nextAttempts >= MAX_ATTEMPTS;
+      const isFinalFailure = nextAttempts >= MAX_ATTEMPTS;
 
       await prisma.campaignPriceJob.update({
-        where: {
-          id: job.id,
-        },
+        where: { id: job.id },
         data: {
-          status: isFinalFailure
-            ? "failed"
-            : "pending",
+          status: isFinalFailure ? "failed" : "pending",
           error:
             error instanceof Error
               ? error.message
@@ -187,7 +179,8 @@ export async function processPriceJobs(
 
       failed++;
     }
-  }
+  })
+);
 
   const affectedCampaigns = Array.from(
     new Set(
