@@ -2,7 +2,7 @@ export function parseDateTimeLocal(
   value,
   timezoneOffset
 ) {
-  if (!value) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
     return null;
   }
 
@@ -21,7 +21,15 @@ export function parseDateTimeLocal(
 
   const offset = Number(timezoneOffset || 0);
 
-  return new Date(
+  if (
+    ![year, month, day, hour, minute, offset].every(Number.isFinite) ||
+    month < 1 || month > 12 || day < 1 || day > 31 ||
+    hour < 0 || hour > 23 || minute < 0 || minute > 59
+  ) {
+    return null;
+  }
+
+  const result = new Date(
     Date.UTC(
       year,
       month - 1,
@@ -31,4 +39,6 @@ export function parseDateTimeLocal(
     ) +
       offset * 60 * 1000
   );
+
+  return Number.isNaN(result.getTime()) ? null : result;
 }

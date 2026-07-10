@@ -5,10 +5,7 @@ import { authenticate } from "../shopify.server";
 import { parseDateTimeLocal } from "../utils/dates.server";
 import "../styles/app-style.css";
 import ProductSelector from "../components/ProductSelector.jsx";
-// export const loader = async ({ request }) => {
-//   await authenticate.admin(request);
-//   return null;
-// };
+import CampaignDateTimePicker from "../components/CampaignDateTimePicker.jsx";
 
 
 export const loader = async ({ request }) => {
@@ -82,6 +79,12 @@ if (!products.length) {
   });
 }
 
+if (!startDate || !endDate) {
+  throw new Response("Start and end date/time are required", {
+    status: 400,
+  });
+}
+
 if (saleValue <= 0) {
   throw new Response("Sale value must be greater than zero", {
     status: 400,
@@ -98,7 +101,10 @@ if (
   );
 }
 
-if (startDate >= endDate) {
+const parsedStartDate = parseDateTimeLocal(startDate, timezoneOffset);
+const parsedEndDate = parseDateTimeLocal(endDate, timezoneOffset);
+
+if (!parsedStartDate || !parsedEndDate || parsedStartDate >= parsedEndDate) {
   throw new Response(
     "End date must be after start date",
     { status: 400 }
@@ -110,14 +116,8 @@ try {
     const campaign = await tx.campaign.create({
       data: {
         name,
-        startDate: parseDateTimeLocal(
-          startDate,
-          timezoneOffset
-        ),
-        endDate: parseDateTimeLocal(
-          endDate,
-          timezoneOffset
-        ),
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
         discountType,
         saleValue: Number(saleValue),
         status: "scheduled",
@@ -190,6 +190,8 @@ export default function CreateCampaignPage({ loaderData }) {
     timezoneOffset,
     setTimezoneOffset,
   ] = useState("0");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     setTimezoneOffset(
@@ -228,13 +230,13 @@ export default function CreateCampaignPage({ loaderData }) {
     }
 
     const form = e.currentTarget;
-    const start = form.startDate.value;
-    const end = form.endDate.value;
+    const start = startDate;
+    const end = endDate;
     const saleValue = Number(form.saleValue.value);
 
-    if (start >= end) {
+    if (!start || !end || start >= end) {
       e.preventDefault();
-      alert("End date must be after Start date.");
+      alert("Select a start and end date/time, with the end after the start.");
       return;
     }
 
@@ -304,25 +306,19 @@ export default function CreateCampaignPage({ loaderData }) {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Start Date</label>
-                <input
-                  type="datetime-local"
-                  name="startDate"
-                  required
-                  className="form-control"
-                />
-              </div>
+              <CampaignDateTimePicker
+                label="Start Date & Time"
+                name="startDate"
+                value={startDate}
+                onChange={setStartDate}
+              />
 
-              <div className="form-group">
-                <label>End Date</label>
-                <input
-                  type="datetime-local"
-                  name="endDate"
-                  required
-                  className="form-control"
-                />
-              </div>
+              <CampaignDateTimePicker
+                label="End Date & Time"
+                name="endDate"
+                value={endDate}
+                onChange={setEndDate}
+              />
 
               <div className="form-group">
                 <label>Discount Type</label>

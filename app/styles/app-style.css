@@ -42,6 +42,18 @@
   font-size: 14px;
 }
 
+.campaign-date-time-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .campaign-date-time-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .product-search {
   width: 100%;
   max-width: 100%;
