@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Form, redirect } from "react-router";
 import { useEffect, useState } from "react";
 import prisma from "../db.server";
@@ -297,8 +298,9 @@ export default function CreateCampaignPage({ loaderData }) {
               </div>
 
               <div className="form-group">
-                <label>Campaign Name</label>
+                <label htmlFor="campaign-name">Campaign Name</label>
                 <input
+                  id="campaign-name"
                   type="text"
                   name="name"
                   required
@@ -321,8 +323,9 @@ export default function CreateCampaignPage({ loaderData }) {
               />
 
               <div className="form-group">
-                <label>Discount Type</label>
+                <label htmlFor="discount-type">Discount Type</label>
                 <select
+                  id="discount-type"
                   name="discountType"
                   className="form-control"
                 >
@@ -337,8 +340,9 @@ export default function CreateCampaignPage({ loaderData }) {
               </div>
 
               <div className="form-group">
-                <label>Sale Value</label>
+                <label htmlFor="sale-value">Sale Value</label>
                 <input
+                  id="sale-value"
                   type="number"
                   name="saleValue"
                   step="0.01"
